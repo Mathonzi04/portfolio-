@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     paths:
-      - 'coffee-shop-landing-page.zip'  # Only runs when you upload this zip
+      - 'coffee-shop-landing-page.zip'
 
 permissions:
   contents: read
@@ -18,12 +18,23 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Unzip site
-        run: unzip -o coffee-shop-landing-page.zip -d out
+        run: unzip -o coffee-shop-landing-page.zip -d site
 
-      - name: Flatten folder if needed
-        run: |
-          shopt -s dotglob
-          mv out/*/* out/ 2>/dev/null || true
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm' # you have pnpm-lock.yaml
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: cd site && pnpm install
+
+      - name: Build project
+        run: cd site && pnpm build
+        # This creates a "dist" folder
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -31,7 +42,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'out'
+          path: 'site/dist'  # Upload the built files, not source
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
